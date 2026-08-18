@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>BusGo | Book Bus Tickets</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <header class="navbar">
+    <a href="#" class="logo">
+      <span class="logo-mark">🚌</span>
+
+      <span>
+        <strong>BusGo</strong>
+        <small>Travel made simple</small>
+      </span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="#search-card">Search buses</a>
+      <a href="#features">Why BusGo?</a>
+      <a href="#my-bookings-card">My bookings</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="language-btn">EN ▾</button>
+
+      <span class="login-status">
+        <span class="online-dot"></span>
+        <span id="auth-status">Not signed in</span>
+      </span>
+
+      <a href="#auth-section" class="nav-signin">Sign in</a>
+    </div>
+
+    <button class="mobile-menu" aria-label="Open menu">
+      ☰
+    </button>
+  </header>
+
+  <section class="hero">
+    <div class="hero-background-circle circle-one"></div>
+    <div class="hero-background-circle circle-two"></div>
+
+    <div class="hero-content">
+      <div class="hero-copy">
+        <div class="eyebrow">
+          <span>✦</span>
+          Smart, simple and secure travel
+        </div>
+
+        <h1>
+          Your journey
+          <span>starts here.</span>
+        </h1>
+
+        <p>
+          Discover comfortable buses, compare routes and book your next
+          adventure in just a few clicks.
+        </p>
+
+        <div class="hero-stats">
+          <div>
+            <strong>500+</strong>
+            <span>Bus routes</span>
+          </div>
+
+          <div>
+            <strong>50K+</strong>
+            <span>Happy travelers</span>
+          </div>
+
+          <div>
+            <strong>24/7</strong>
+            <span>Travel support</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-illustration">
+        <div class="cloud cloud-one"></div>
+        <div class="cloud cloud-two"></div>
+
+        <div class="road"></div>
+
+        <div class="travel-card">
+          <span class="travel-card-icon">📍</span>
+
+          <div>
+            <small>Popular route</small>
+            <strong>Bengaluru → Goa</strong>
+          </div>
+
+          <span class="arrow-icon">→</span>
+        </div>
+
+        <div class="bus-illustration">
+          <div class="bus-window-row">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div class="bus-body">
+            <span class="bus-front-light"></span>
+            <span class="bus-wheel wheel-one"></span>
+            <span class="bus-wheel wheel-two"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="page-container">
+
+    <section class="search-card card-overlap" id="search-card">
+      <div class="search-heading">
+        <div>
+          <span class="small-label">PLAN YOUR TRIP</span>
+          <h2>Where would you like to go?</h2>
+        </div>
+
+        <span class="search-badge">
+          🛡 Safe and reliable booking
+        </span>
+      </div>
+
+      <div class="search-form">
+        <div class="search-field">
+          <label for="origin">From</label>
+
+          <div class="field-control">
+            <span class="field-icon">⌖</span>
+
+            <input
+              id="origin"
+              type="text"
+              placeholder="Departure city"
+            />
+          </div>
+        </div>
+
+        <button
+          class="swap-button"
+          type="button"
+          onclick="swapLocations()"
+        >
+          ⇄
+        </button>
+
+        <div class="search-field">
+          <label for="destination">To</label>
+
+          <div class="field-control">
+            <span class="field-icon">⌖</span>
+
+            <input
+              id="destination"
+              type="text"
+              placeholder="Arrival city"
+            />
+          </div>
+        </div>
+
+        <div class="search-field">
+          <label for="travel-date">Travel date</label>
+
+          <div class="field-control">
+            <span class="field-icon">▣</span>
+
+            <input id="travel-date" type="date" />
+          </div>
+        </div>
+
+        <button class="search-button" onclick="handleSearch()">
+          <span>Search buses</span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <div id="search-results" class="search-results"></div>
+    </section>
+
+    <section class="features-section" id="features">
+      <div class="section-intro">
+        <span class="small-label">WHY CHOOSE BUSGO?</span>
+
+        <h2>Travel with confidence</h2>
+
+        <p>
+          Everything you need for a comfortable and stress-free journey.
+        </p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon blue-icon">🔎</div>
+          <h3>Easy comparison</h3>
+          <p>
+            Compare buses, timings and prices in one simple place.
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon orange-icon">💳</div>
+          <h3>Secure payments</h3>
+          <p>
+            Your personal information and payments are protected.
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon green-icon">🎫</div>
+          <h3>Instant tickets</h3>
+          <p>
+            Receive your booking confirmation immediately.
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon purple-icon">💬</div>
+          <h3>Helpful support</h3>
+          <p>
+            Get assistance whenever you need help.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="account-card main-card" id="auth-section">
+      <div class="card-title-row">
+        <div>
+          <span class="small-label">BUSGO ACCOUNT</span>
+          <h2>Manage your trips easily</h2>
+          <p>Sign in to view and manage your reservations.</p>
+        </div>
+
+        <div class="account-symbol">👤</div>
+      </div>
+
+      <div class="auth-grid">
+
+        <div class="auth-box">
+          <div class="auth-box-heading">
+            <span class="heading-icon">✨</span>
+
+            <div>
+              <h3>Create an account</h3>
+              <p>New to BusGo? Join us today.</p>
+            </div>
+          </div>
+
+          <label for="su-email">Email address</label>
+
+          <input
+            id="su-email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+
+          <label for="su-password">Password</label>
+
+          <input
+            id="su-password"
+            type="password"
+            placeholder="Minimum 8 characters"
+            autocomplete="new-password"
+          />
+
+          <button
+            class="primary-button full-width"
+            onclick="handleSignUp()"
+          >
+            Create account
+          </button>
+
+          <div class="verification-box">
+            <label for="su-code">Verification code</label>
+
+            <input
+              id="su-code"
+              type="text"
+              placeholder="Enter verification code"
+            />
+
+            <button
+              class="secondary-button full-width"
+              onclick="handleConfirmSignUp()"
+            >
+              Verify email
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-box">
+          <div class="auth-box-heading">
+            <span class="heading-icon">👋</span>
+
+            <div>
+              <h3>Welcome back</h3>
+              <p>Sign in to continue your journey.</p>
+            </div>
+          </div>
+
+          <label for="si-email">Email address</label>
+
+          <input
+            id="si-email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+
+          <label for="si-password">Password</label>
+
+          <input
+            id="si-password"
+            type="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          />
+
+          <div class="sign-in-actions">
+            <button
+              class="primary-button"
+              onclick="handleSignIn()"
+            >
+              Sign in
+            </button>
+
+            <button
+              class="text-button"
+              onclick="handleSignOut()"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="auth-message" class="message"></div>
+    </section>
+
+    <section
+      class="seat-card main-card"
+      id="seat-section"
+      style="display: none;"
+    >
+      <div class="card-title-row">
+        <div>
+          <span class="small-label">CHOOSE YOUR SEAT</span>
+          <h2>Make yourself comfortable</h2>
+          <p>Select your preferred seat before booking.</p>
+        </div>
+
+        <div class="account-symbol">💺</div>
+      </div>
+
+      <div class="seat-legend">
+        <span>
+          <i class="legend-seat available"></i>
+          Available
+        </span>
+
+        <span>
+          <i class="legend-seat selected"></i>
+          Selected
+        </span>
+
+        <span>
+          <i class="legend-seat booked"></i>
+          Booked
+        </span>
+      </div>
+
+      <div class="bus-layout">
+        <div class="driver-area">
+          <span>🚍</span>
+          <small>DRIVER</small>
+        </div>
+
+        <div id="seat-map"></div>
+      </div>
+
+      <div class="passenger-panel">
+        <div class="passenger-title">
+          <span>🎫</span>
+
+          <div>
+            <h3>Passenger details</h3>
+            <p>Enter information for this reservation.</p>
+          </div>
+        </div>
+
+        <div class="passenger-form">
+          <div>
+            <label for="passenger-name">Passenger name</label>
+
+            <input
+              id="passenger-name"
+              type="text"
+              placeholder="Full name"
+            />
+          </div>
+
+          <div>
+            <label for="contact">Phone or email</label>
+
+            <input
+              id="contact"
+              type="text"
+              placeholder="Contact information"
+            />
+          </div>
+
+          <button
+            class="primary-button booking-button"
+            onclick="handleBook()"
+          >
+            Confirm booking →
+          </button>
+        </div>
+      </div>
+
+      <div id="booking-message" class="message"></div>
+    </section>
+
+    <section class="main-card bookings-card" id="my-bookings-card">
+      <div class="card-title-row">
+        <div>
+          <span class="small-label">YOUR TRAVEL HISTORY</span>
+          <h2>My bookings</h2>
+          <p>View and manage your confirmed reservations.</p>
+        </div>
+
+        <button
+          class="outline-button"
+          onclick="loadMyBookings()"
+        >
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div id="my-bookings">
+        <div class="empty-state">
+          <div class="empty-state-icon">🎫</div>
+
+          <h3>No bookings yet</h3>
+
+          <p>
+            Your confirmed reservations will appear here.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="promo-section">
+      <div class="promo-copy">
+        <span class="small-label">TRAVEL BETTER</span>
+
+        <h2>
+          Your next adventure is only a ticket away.
+        </h2>
+
+        <p>
+          Book your bus journey quickly and enjoy a smooth travel
+          experience from start to finish.
+        </p>
+
+        <a href="#search-card" class="promo-button">
+          Start planning →
+        </a>
+      </div>
+
+      <div class="promo-art">
+        <div class="sun"></div>
+        <div class="mountain mountain-one"></div>
+        <div class="mountain mountain-two"></div>
+        <div class="promo-bus">🚌</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-brand">
+      <span class="logo-mark">🚌</span>
+      <strong>BusGo</strong>
+    </div>
+
+    <p>
+      Comfortable journeys. Simple booking. Better travel.
+    </p>
+
+    <span>
+      © 2026 BusGo. All rights reserved.
+    </span>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

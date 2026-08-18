@@ -1,0 +1,393 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  Cloud-based Bus Ticket Reservation System — serverless, free-tier friendly
+  (Cognito + API Gateway + Lambda + DynamoDB + S3 static frontend)
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 15
+    MemorySize: 256
+    Environment:
+      Variables:
+        TRIPS_TABLE: !Ref TripsTable
+        SEATS_TABLE: !Ref SeatsTable
+        BOOKINGS_TABLE: !Ref BookingsTable
+
+Resources:
+
+  # =========================================================
+  # AUTHENTICATION
+  # =========================================================
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: bus-reservation-users
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireUppercase: false
+          RequireSymbols: false
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: bus-reservation-web
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  # =========================================================
+  # DYNAMODB TABLES
+  # =========================================================
+
+  TripsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Trips
+      BillingMode: PAY_PER_REQUEST
+
+      AttributeDefinitions:
+        - AttributeName: trip_id
+          AttributeType: S
+        - AttributeName: route_key
+          AttributeType: S
+        - AttributeName: travel_date
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: trip_id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: RouteDateIndex
+          KeySchema:
+            - AttributeName: route_key
+              KeyType: HASH
+            - AttributeName: travel_date
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  SeatsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Seats
+      BillingMode: PAY_PER_REQUEST
+
+      AttributeDefinitions:
+        - AttributeName: trip_id
+          AttributeType: S
+        - AttributeName: seat_number
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: trip_id
+          KeyType: HASH
+        - AttributeName: seat_number
+          KeyType: RANGE
+
+  BookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Bookings
+      BillingMode: PAY_PER_REQUEST
+
+      AttributeDefinitions:
+        - AttributeName: booking_id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: booking_id
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: UserBookingsIndex
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # =========================================================
+  # SHARED LAMBDA LAYER
+  # =========================================================
+
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: bus-reservation-common
+      ContentUri: src/layers/common/
+      CompatibleRuntimes:
+        - python3.12
+      RetentionPolicy: Delete
+
+  # =========================================================
+  # API GATEWAY
+  # =========================================================
+
+  BusReservationApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+
+      # -------------------------------------------------------
+      # CORS
+      # -------------------------------------------------------
+      Cors:
+        AllowMethods: "'GET,POST,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+      # -------------------------------------------------------
+      # AUTHENTICATION
+      # -------------------------------------------------------
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+
+        # IMPORTANT:
+        # Do not require Cognito authentication for the
+        # browser's CORS OPTIONS preflight request.
+        AddDefaultAuthorizerToCorsPreflight: false
+
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+
+  # =========================================================
+  # SEARCH ROUTES
+  # PUBLIC ENDPOINT
+  # =========================================================
+
+  SearchRoutesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: search-routes
+      CodeUri: src/search_routes/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TripsTable
+
+      Events:
+        Search:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BusReservationApi
+            Path: /routes
+            Method: get
+
+            # Search does not require login
+            Auth:
+              Authorizer: NONE
+
+  # =========================================================
+  # GET SEATS
+  # PUBLIC ENDPOINT
+  # =========================================================
+
+  GetSeatsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get-seats
+      CodeUri: src/get_seats/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref SeatsTable
+
+      Events:
+        GetSeats:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BusReservationApi
+            Path: /trips/{trip_id}/seats
+            Method: get
+
+            # Seat availability does not require login
+            Auth:
+              Authorizer: NONE
+
+  # =========================================================
+  # CREATE BOOKING
+  # AUTHENTICATED ENDPOINT
+  # =========================================================
+
+  CreateBookingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create-booking
+      CodeUri: src/create_booking/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookingsTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SeatsTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TripsTable
+
+      Events:
+        CreateBooking:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BusReservationApi
+            Path: /bookings
+            Method: post
+
+            # Booking requires Cognito authentication
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+  # =========================================================
+  # LIST BOOKINGS
+  # AUTHENTICATED ENDPOINT
+  # =========================================================
+
+  ListBookingsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: list-bookings
+      CodeUri: src/list_bookings/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref BookingsTable
+
+      Events:
+        ListBookings:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BusReservationApi
+            Path: /bookings
+            Method: get
+
+            # User must be authenticated to see bookings
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+  # =========================================================
+  # CANCEL BOOKING
+  # AUTHENTICATED ENDPOINT
+  # =========================================================
+
+  CancelBookingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: cancel-booking
+      CodeUri: src/cancel_booking/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookingsTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SeatsTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TripsTable
+
+      Events:
+        CancelBooking:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BusReservationApi
+            Path: /bookings/{booking_id}
+            Method: delete
+
+            # Cancellation requires Cognito authentication
+            Auth:
+              Authorizer: CognitoAuthorizer
+
+  # =========================================================
+  # S3 FRONTEND
+  # =========================================================
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "bus-reservation-frontend-${AWS::AccountId}"
+
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+
+      PolicyDocument:
+        Version: "2012-10-17"
+
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${FrontendBucket}/*"
+
+# =========================================================
+# OUTPUTS
+# =========================================================
+
+Outputs:
+
+  ApiEndpoint:
+    Description: "Base URL for the REST API"
+    Value: !Sub "https://${BusReservationApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+
+  UserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref UserPool
+
+  UserPoolClientId:
+    Description: "Cognito User Pool Client ID"
+    Value: !Ref UserPoolClient
+
+  FrontendBucketName:
+    Description: "S3 bucket used for the frontend"
+    Value: !Ref FrontendBucket
+
+  FrontendWebsiteURL:
+    Description: "S3 website URL"
+    Value: !GetAtt FrontendBucket.WebsiteURL

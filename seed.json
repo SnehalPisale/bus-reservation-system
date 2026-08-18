@@ -1,0 +1,35 @@
+[
+  {
+    "trip_id": "TRIP-BLR-PUN-001",
+    "origin": "BENGALURU",
+    "destination": "PUNE",
+    "travel_date": "2026-09-01",
+    "departure_time": "21:00",
+    "arrival_time": "07:30",
+    "bus_name": "Volvo Multi-Axle A/C Sleeper",
+    "total_seats": 30,
+    "fare": 1200
+  },
+  {
+    "trip_id": "TRIP-BLR-PUN-002",
+    "origin": "BENGALURU",
+    "destination": "PUNE",
+    "travel_date": "2026-09-01",
+    "departure_time": "22:30",
+    "arrival_time": "09:00",
+    "bus_name": "Non-A/C Seater",
+    "total_seats": 40,
+    "fare": 900
+  },
+  {
+    "trip_id": "TRIP-MUM-GOA-001",
+    "origin": "MUMBAI",
+    "destination": "GOA",
+    "travel_date": "2026-09-01",
+    "departure_time": "20:00",
+    "arrival_time": "06:00",
+    "bus_name": "A/C Sleeper",
+    "total_seats": 32,
+    "fare": 1100
+  }
+]
